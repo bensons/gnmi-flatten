@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -133,6 +134,19 @@ func formatValue(value interface{}) string {
 		return fmt.Sprintf("%v", v)
 	case nil:
 		return "null"
+	case map[string]interface{}:
+		// Check if this is a leaflist (has "element" key with array)
+		if elements, ok := v["element"]; ok {
+			if elemArray, ok := elements.([]interface{}); ok {
+				return formatLeaflist(elemArray)
+			}
+		}
+		// For other complex types, marshal to JSON
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		return string(jsonBytes)
 	default:
 		// For complex types, marshal to JSON
 		jsonBytes, err := json.Marshal(v)
@@ -141,4 +155,24 @@ func formatValue(value interface{}) string {
 		}
 		return string(jsonBytes)
 	}
+}
+
+// formatLeaflist formats a gNMI leaflist value as a comma-separated list
+func formatLeaflist(elements []interface{}) string {
+	var values []string
+	for _, elem := range elements {
+		// Each element should have a "Value" key with the typed value
+		if elemMap, ok := elem.(map[string]interface{}); ok {
+			if valueMap, ok := elemMap["Value"].(map[string]interface{}); ok {
+				// Extract the actual value from the typed value
+				var elemValue interface{}
+				for _, v := range valueMap {
+					elemValue = v
+					break
+				}
+				values = append(values, formatValue(elemValue))
+			}
+		}
+	}
+	return "[" + strings.Join(values, ", ") + "]"
 }

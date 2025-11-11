@@ -119,8 +119,16 @@ func formatValue(value interface{}) string {
 	switch v := value.(type) {
 	case string:
 		return v
-	case float64, int, int64, uint, uint64:
-		return fmt.Sprintf("%v", v)
+	case float64:
+		// Check if this is actually an integer value
+		if v == float64(int64(v)) {
+			// It's an integer, format without decimal point or scientific notation
+			return fmt.Sprintf("%.0f", v)
+		}
+		// It has a fractional part, use fixed-point notation
+		return fmt.Sprintf("%f", v)
+	case int, int64, uint, uint64:
+		return fmt.Sprintf("%d", v)
 	case bool:
 		return fmt.Sprintf("%v", v)
 	case nil:

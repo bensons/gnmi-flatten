@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -121,17 +122,20 @@ func formatValue(value interface{}) string {
 	case string:
 		return v
 	case float64:
-		// Check if this is actually an integer value
-		if v == float64(int64(v)) {
-			// It's an integer, format without decimal point or scientific notation
-			return fmt.Sprintf("%.0f", v)
-		}
-		// It has a fractional part, use fixed-point notation
-		return fmt.Sprintf("%f", v)
-	case int, int64, uint, uint64:
-		return fmt.Sprintf("%d", v)
+		// Use strconv.FormatFloat with 'f' format to avoid scientific notation
+		// prec -1 means use the smallest number of digits necessary
+		str := strconv.FormatFloat(v, 'f', -1, 64)
+		return str
+	case int:
+		return strconv.Itoa(v)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	case uint:
+		return strconv.FormatUint(uint64(v), 10)
 	case bool:
-		return fmt.Sprintf("%v", v)
+		return strconv.FormatBool(v)
 	case nil:
 		return "null"
 	case map[string]interface{}:

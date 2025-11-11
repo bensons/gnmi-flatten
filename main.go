@@ -61,7 +61,13 @@ func main() {
 		// Parse the JSON line
 		var entry LogEntry
 		if err := json.Unmarshal([]byte(line), &entry); err != nil {
+			// Show first 200 characters of the problematic line for debugging
+			preview := line
+			if len(preview) > 200 {
+				preview = preview[:200] + "..."
+			}
 			fmt.Fprintf(os.Stderr, "Error parsing JSON on line %d: %v\n", lineNum, err)
+			fmt.Fprintf(os.Stderr, "Line preview: %s\n", preview)
 			continue
 		}
 
